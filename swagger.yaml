@@ -1,0 +1,243 @@
+swagger: "2.0"
+info:
+  description: "Esta é a API utilizada como base para o teste ao cargo de dev front-end da [Sinersoft](http://www.sinersoft.com.br)."
+  version: "1.0.0"
+  title: "Sinersoft front-end Teste"
+  contact:
+    email: "julianopiovezan@sinersoft.com.br"
+host: "dev-front-end-teste.sinersoft.com.br"
+tags:
+- name: "cidades"
+  description: "Consulta de cidades"
+- name: "veiculos"
+  description: "Operações sobre Veículos"
+schemes:
+- "https"
+paths:
+  /cidades:
+    get:
+      tags:
+      - "cidades"
+      summary: "Consulta de cidades pelo nome"
+      description: "Se filtro não informado, retorna todas as cidades cadastradas"
+      operationId: "consultaCidades"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "q"
+        in: "query"
+        description: "Valor que deve ser considerado para o filtro"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Cidade"
+  /veiculos:
+    get:
+      tags:
+      - "veiculos"
+      summary: "Consulta de veículos"
+      operationId: "consultaVeiculos"
+      produces:
+      - "application/json"
+      parameters:
+        - $ref: '#/parameters/_page'
+        - $ref: '#/parameters/_limit'
+        - $ref: '#/parameters/_sort'
+        - $ref: '#/parameters/_order'
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VeiculoComHistorico"
+    post:
+      tags:
+      - "veiculos"
+      summary: "Insere um novo veículo"
+      operationId: "inserirVeiculo"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "veículo"
+        required: true
+        schema:
+          $ref: "#/definitions/Veiculo"
+      responses:
+        200:
+          description: "successful operation"
+  /veiculos/{id}:
+    get:
+      tags:
+      - "veiculos"
+      summary: "Consulta Veículo pela ID"
+      operationId: "consultaVeiculoID"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        type: "string"
+        format: "uuid"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VeiculoComHistorico"
+    patch:
+      tags:
+      - "veiculos"
+      summary: "Atualiza campos do Veículo"
+      operationId: "patchVeiculo"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        type: "string"
+        format: "uuid"
+      - in: "body"
+        name: "body"
+        description: "veículo"
+        required: true
+        schema:
+          $ref: "#/definitions/PatchVeiculo"
+      responses:
+        200:
+          description: "successful operation"
+    delete:
+      tags:
+      - "veiculos"
+      summary: "Remove o Veículo"
+      operationId: "removeVeiculo"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        type: "string"
+        format: "uuid"
+      responses:
+        200:
+          description: "successful operation"
+definitions:
+  Cidade:
+    type: "object"
+    required:
+    - "id"
+    - "nome"
+    - "uf"
+    properties:
+      id:
+        type: "string"
+        format: "uuid"
+      nome:
+        type: "string"
+        example: "CRICIÚMA"
+      uf:
+        type: "string"
+        enum: [AC,AL,AP,AM,BA,CE,DF,ES,GO,MA,MT,MS,MG,PA,PB,PR,PE,PI,RJ,RN,RS,RO,RR,SC,SP,SE,TO]
+        example: "SC"
+  AbstractVeiculo:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        format: "uuid"
+      placa:
+        type: "string"
+        pattern: '^[A-Z][A-Z][A-Z]\d(\d|[A-Z])\d{2}$'
+        example: "AAA0A00"
+      cidade:
+        type: "string"
+        format: "uuid"
+      km_atual:
+        type: "number"
+        minimum: 0
+      email_proprietario:
+        type: "string"
+        format: "email"
+  PatchVeiculo:
+    allOf: 
+      - $ref: '#/definitions/AbstractVeiculo'
+      - type: object
+  VeiculoHistorico:
+    type: "object"
+    required:
+    - "data_hora"
+    - "situacao"
+    properties:
+      data_hora:
+        type: "string"
+        format: "date-time"
+      situacao:
+        type: "string"
+        enum: [LIBERADO, BLOQUEADO]
+  Veiculo:
+    allOf: 
+      - $ref: '#/definitions/AbstractVeiculo'
+      - type: object
+        required: 
+          - id
+          - placa
+          - cidade
+          - km_atual
+  VeiculoComHistorico:
+    allOf:
+      - $ref: '#/definitions/Veiculo'
+      - type: object
+        required:
+          - historico_situacoes
+        properties:
+          historico_situacoes:
+            type: "array"
+            items:
+              $ref: "#/definitions/VeiculoHistorico"
+parameters:
+  _page:
+    name: _page
+    in: query
+    description: Página
+    type: number
+    minimum: 1
+  _limit:
+    name: _limit
+    in: query
+    description: Limite
+    type: number
+    minimum: 1
+  _sort:
+    name: _sort
+    in: query
+    description: Sort
+    type: array
+    collectionFormat: csv
+    items:
+      type: string
+  _order:
+    name: _order
+    in: query
+    description: Order
+    type: array
+    collectionFormat: csv
+    items:
+      type: string
+      enum: [asc, desc]
